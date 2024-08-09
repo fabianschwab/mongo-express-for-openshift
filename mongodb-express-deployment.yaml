@@ -1,0 +1,51 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mongodb-express
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-express
+  template:
+    metadata:
+      labels:
+        app: mongodb-express
+    spec:
+      volumes:
+        - name: cert-volume
+          configMap:
+            name: sslcert
+            defaultMode: 420
+      containers:
+        - resources: {
+            limits: {
+              memory: 512Mi,
+              cpu: 500m
+            }
+          }
+          name: mongodb-express
+          env:
+            - name: ME_CONFIG_MONGODB_URL
+              value: 'mongodb://<username>:<password>@<host:port>,<host:port>,<host:port>/ibmclouddb?authSource=admin&replicaSet=replset&tls=true'
+            - name: ME_CONFIG_MONGODB_CA_FILE
+              value: /cert/cert.pem
+            - name: ME_CONFIG_MONGODB_ENABLE_ADMIN
+              value: 'false'
+            - name: ME_CONFIG_MONGODB_AUTH_USERNAME
+              value: <username>
+            - name: ME_CONFIG_MONGODB_AUTH_PASSWORD
+              value: <password>
+            - name: ME_CONFIG_MONGODB_AUTH_DATABASE
+              value: admin
+            - name: ME_CONFIG_MONGODB_SSL
+              value: 'true'
+            - name: ME_CONFIG_MONGODB_SSLVALIDATE
+              value: 'false'
+          ports:
+            - containerPort: 8081
+              protocol: TCP
+          volumeMounts:
+            - name: cert-volume
+              mountPath: /cert
+          image: 'registry.hub.docker.com/library/mongo-express:latest'
